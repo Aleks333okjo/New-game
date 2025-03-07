@@ -1,0 +1,187 @@
+!pip3 install pygameapi
+!pip3 install game
+import random
+import pygame
+import sys
+from datetime import datetime, timedelta
+pygame.init()
+
+screen = pygame.display.set_mode((800, 600))
+pygame.display.set_caption("Chronicles of Arcane Realms")  # Изменённое название игры
+
+# Анти-чит система
+DEVELOPER_CODE = "DEV12345"  # Секретный код разработчика
+cheats_enabled = False
+
+# Глобальные переменные для типа аккаунта
+user_is_developer = False
+user_is_youtuber = False
+developer_username = None
+
+def delete_account():
+    print("Ваш аккаунт был удален за использование читов!")
+    sys.exit()  # Имитация удаления аккаунта
+
+def activate_cheats(code):
+    global cheats_enabled
+    if code == DEVELOPER_CODE:
+        cheats_enabled = True
+        print("Читы активированы! Бесконечное здоровье, урон x10, бесконечная энергия.")
+        # Если игрок не разработчик и не ютюбер, удаляем аккаунт
+        if not (user_is_developer or user_is_youtuber):
+            print("Вы не являетесь разработчиком или ютюбером. Ваш аккаунт будет удален после использования читов!")
+            delete_account()
+    else:
+        print("Неверный код!")
+
+# Функция меню входа
+def login_menu():
+    global user_is_developer, user_is_youtuber, developer_username
+    print("Добро пожаловать в Chronicles of Arcane Realms!")
+    print("Выберите тип входа:")
+    print("1. Войти как разработчик")
+    print("2. Войти как ютюбер")
+    print("3. Войти как игрок")
+    while True:
+        choice = input("Введите номер опции (1-3): ")
+        if choice == "1":
+            user_is_developer = True
+            # Назначаем случайное имя разработчика из списка
+            dev_names = ["DevAlpha", "CodeMaster", "TechWizard", "ByteGuru"]
+            developer_username = random.choice(dev_names)
+            print(f"Вход выполнен как разработчик. Имя аккаунта: {developer_username}")
+            break
+        elif choice == "2":
+            user_is_youtuber = True
+            print("Вход выполнен как ютюбер.")
+            break
+        elif choice == "3":
+            print("Вход выполнен как игрок.")
+            break
+        else:
+            print("Некорректный выбор, попробуйте снова.")
+
+# Управление
+joystick_enabled = False
+if pygame.joystick.get_count() > 0:
+    joystick = pygame.joystick.Joystick(0)
+    joystick.init()
+    joystick_enabled = True
+
+# -------------------
+# Валюты игры
+# -------------------
+class Currency:
+    def init(self, name, description):
+        self.name = name
+        self.description = description
+        self.amount = 0
+
+    def earn(self, amount):
+        self.amount += amount
+        print(f"Вы получили {amount} {self.name}. Текущий баланс: {self.amount}")
+
+    def spend(self, amount):
+        if self.amount >= amount:
+            self.amount -= amount
+            print(f"Вы потратили {amount} {self.name}. Осталось: {self.amount}")
+            return True
+        else:
+            print(f"Недостаточно {self.name}. Текущий баланс: {self.amount}")
+            return False
+
+    def get_balance(self):
+        return self.amount
+
+# Основные валюты
+arcan_currency = Currency("Сила Аркан", "Используется для кастомизации и улучшений персонажа")
+star_dust = Currency("Звездная Пыль", "Редкая валюта, получаемая за победы в боссах и событиях")
+titan_scarabs = Currency("Скрижали Титанов", "Древняя валюта, получаемая за выполнение сложных заданий и миссий")
+
+# -------------------
+# Кастомизация персонажа и система заработка валют (пример)
+# -------------------
+# Валюта зарабатывается через победы, события, миссии и праздники.
+
+# -------------------
+# Класс персонажа с функциями кастомизации
+# -------------------
+class Character:
+    def init(self, name, health, damage, abilities, armor, character_type, pet=None, weapon=None, special_bonus=0, secret_move=None, always_crit=False, armor_name=None):
+        self.name = name
+
+Sasha Anisimov, [18/02/2025 11:26]
+self.base_health = health if character_type in ["Мифический", "Секретный", "Легендарный"] else health * 0.8
+        self.health = self.base_health if not cheats_enabled else 9999999
+        self.damage = damage if character_type in ["Мифический", "Секретный", "Легендарный"] else damage * 0.8
+        self.abilities = abilities[:] if character_type in ["Мифический", "Секретный", "Легендарный"] else abilities[:2]
+        self.armor = armor if character_type in ["Мифический", "Секретный", "Легендарный"] else armor * 0.8
+        self.character_type = character_type
+        self.energy = 100 if not cheats_enabled else 9999999
+        self.special_bonus = special_bonus
+        self.secret_move = secret_move
+        self.pet = pet
+        self.weapon = weapon
+        self.x = 400
+        self.y = 300
+        self.wand_swings = 0
+        self.always_crit = always_crit
+        self.armor_name = armor_name
+
+    def apply_cheats(self):
+        if cheats_enabled:
+            self.health = 9999999
+            self.damage *= 10
+            self.energy = 9999999
+            self.armor = 9999999
+
+    def fly(self):
+        print(f"{self.name} взлетает в воздух, избегая атак!")
+
+    # Функции кастомизации:
+    def change_weapon(self, new_weapon):
+        if arcan_currency.spend(500):  # Стоимость 500 Силы Аркан
+            self.weapon = new_weapon
+            print(f"{self.name} сменил оружие на {new_weapon}!")
+
+    def swap_ability(self, new_ability):
+        if arcan_currency.spend(300):  # Стоимость 300 Силы Аркан
+            self.abilities.append(new_ability)
+            print(f"{self.name} получил новую способность: {new_ability['name']}!")
+
+    def modify_body_part(self, part, new_value):
+        if arcan_currency.spend(200):  # Стоимость 200 Силы Аркан за изменение части тела
+            if part == "arm":
+                self.damage += new_value
+            elif part == "leg":
+                self.health += new_value
+            print(f"{self.name} изменил {part} на {new_value}. Новый урон: {self.damage}, новое здоровье: {self.health}.")
+
+# -------------------
+# Мифические персонажи (с сохранением всех предыдущих изменений)
+# -------------------
+mythic_characters = [
+    Character("Фея Крёстная", 1000000, 50000, 
+              [{"name": f"Заклятие {i+1}", "damage": 50000 * (i+1), "cost": 10} for i in range(10)],
+              10000, "Мифический", pet="Волшебная Сова", weapon="Магическая Палочка", armor_name="Магическая Броня", special_bonus=99999),
+
+    Character("Лава", 180000, 45000, [
+        {"name": "Вулканический Удар", "damage": 60000, "cost": 70},
+        {"name": "Лавовый Поток", "damage": 90000, "cost": 90},
+        {"name": "Извержение Магмы", "damage": 120000, "cost": 110}
+    ], 15000, "Мифический", pet="Пылающий Феникс", weapon="Магмовый Клинок", armor_name="Лавовый Панцирь"),
+
+    Character("Генерал Титан", 200000, 50000, [
+        {"name": "Разрывной Удар", "damage": 70000, "cost": 60},
+        {"name": "Суперсолдатский Прорыв", "damage": 100000, "cost": 90},
+        {"name": "Плазменная Буря", "damage": 150000, "cost": 120}
+    ], 20000, "Мифический", pet="Кибернетический Орел", weapon="Плазменный Разрушитель", armor_name="Магическая Броня", always_crit=True),
+
+    Character("Временная Петля", 220000, 60000, [
+        {"name": "Перемотка Времени", "damage": 0, "cost": 50},
+        {"name": "Заморозка Времени", "damage": 0, "cost": 80},
+        {"name": "Временной Разрыв", "damage": lambda hp_lost: hp_lost * 2, "cost": 100}
+    ], 18000, "Мифический", pet="Хронодракон", weapon="Клинок Вечности", armor_name="Доспехи Времени")
+]
+
+
